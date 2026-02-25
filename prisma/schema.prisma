@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum UserStatus {
+  PRE_HIRE
+  ACTIVE
+  SUSPENDED
+}
+
+enum Country {
+  VE
+  CO
+  AR
+}
+
+enum StepType {
+  INFO
+  ACTION
+  APPROVAL
+}
+
+enum JourneyStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum StepStatus {
+  LOCKED
+  PENDING
+  COMPLETED
+}
+
+enum AccessStatus {
+  REQUESTED
+  PROVISIONED
+  REVOKED
+}
+
+enum ExternalStatus {
+  ACTIVE
+  EXPIRED
+}
+
+enum CommunicationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  IN_APP
+}
+
+enum CommunicationTrigger {
+  JOURNEY_ASSIGNED
+  STEP_UNLOCKED
+  STEP_COMPLETED
+  IDENTITY_FLIP
+  SSO_AUTHENTICATED
+  JOURNEY_COMPLETED
+  REMINDER
+  ACCESS_PROVISIONED
+  CUSTOM
+}
+
+enum ContentBlockType {
+  RICH_TEXT
+  VIDEO_EMBED
+  PDF_LINK
+  CHECKLIST
+  FORM_LINK
+}
+
+// ─────────────────────────────────────────────
+// Core Identity
+// ─────────────────────────────────────────────
+
+model Cluster {
+  id      String  @id @default(uuid()) @db.Uuid
+  name    String
+  country Country
+
+  users            User[]
+  journeyTemplates JourneyTemplate[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([name, country])
+  @@map("clusters")
+}
+
+model User {
+  id                 String     @id @default(uuid()) @db.Uuid
+  jiraEmployeeId     String?    @map("jira_employee_id")
+  fullName           String     @map("full_name")
+  personalEmail      String     @unique @map("personal_email")
+  corporateEmail     String?    @unique @map("corporate_email")
+  phoneNumber        String?    @map("phone_number")
+  status             UserStatus @default(PRE_HIRE)
+  position           String?
+  ssoAuthenticatedAt DateTime?  @map("sso_authenticated_at")
+  tags               String[]   @default([])
+  clusterId          String     @map("cluster_id") @db.Uuid
+
+  cluster             Cluster              @relation(fields: [clusterId], references: [id])
+  journeys            UserJourney[]
+  accessProvisionings AccessProvisioning[]
+  sponsoredExternals  ExternalIdentity[]   @relation("SponsorExternals")
+  communicationLogs   CommunicationLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([clusterId])
+  @@index([corporateEmail])
+  @@map("users")
+}
+
+model ExternalIdentity {
+  id             String         @id @default(uuid()) @db.Uuid
+  fullName       String         @map("full_name")
+  email          String
+  sponsorId      String         @map("sponsor_id") @db.Uuid
+  expirationDate DateTime       @map("expiration_date") @db.Date
+  status         ExternalStatus @default(ACTIVE)
+
+  sponsor User @relation("SponsorExternals", fields: [sponsorId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([sponsorId])
+  @@index([status, expirationDate])
+  @@map("external_identities")
+}
+
+// ─────────────────────────────────────────────
+// Journey & Onboarding Engine
+// ─────────────────────────────────────────────
+
+model JourneyTemplate {
+  id            String  @id @default(uuid()) @db.Uuid
+  clusterId     String? @map("cluster_id") @db.Uuid
+  name          String
+  description   String?
+  isActive      Boolean @default(true) @map("is_active")
+  version       Int     @default(1)
+  applicability Json?   @db.JsonB
+
+  cluster        Cluster?                @relation(fields: [clusterId], references: [id])
+  steps          TemplateStep[]
+  userJourneys   UserJourney[]
+  communications CommunicationTemplate[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([clusterId, isActive])
+  @@map("journey_templates")
+}
+
+model TemplateStep {
+  id                     String   @id @default(uuid()) @db.Uuid
+  journeyTemplateId      String   @map("journey_template_id") @db.Uuid
+  orderIndex             Int      @map("order_index")
+  title                  String
+  description            String?
+  contentUrl             String?  @map("content_url")
+  stepType               StepType @map("step_type")
+  requiresCorporateEmail Boolean  @default(false) @map("requires_corporate_email")
+  isOptional             Boolean  @default(false) @map("is_optional")
+
+  conditions       Json?   @db.JsonB
+  contentPayload   Json?   @db.JsonB
+  estimatedMinutes Int?    @map("estimated_minutes")
+  iconName         String? @map("icon_name")
+
+  journeyTemplate  JourneyTemplate   @relation(fields: [journeyTemplateId], references: [id], onDelete: Cascade)
+  userJourneySteps UserJourneyStep[]
+
+  @@unique([journeyTemplateId, orderIndex])
+  @@index([journeyTemplateId])
+  @@map("template_steps")
+}
+
+// ─────────────────────────────────────────────
+// User Execution State
+// ─────────────────────────────────────────────
+
+model UserJourney {
+  id                  String        @id @default(uuid()) @db.Uuid
+  userId              String        @map("user_id") @db.Uuid
+  journeyTemplateId   String        @map("journey_template_id") @db.Uuid
+  progressPercentage  Int           @default(0) @map("progress_percentage")
+  status              JourneyStatus @default(IN_PROGRESS)
+  compiledFromVersion Int           @default(1) @map("compiled_from_version")
+
+  user            User              @relation(fields: [userId], references: [id])
+  journeyTemplate JourneyTemplate   @relation(fields: [journeyTemplateId], references: [id])
+  steps           UserJourneyStep[]
+
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@unique([userId, journeyTemplateId])
+  @@index([userId])
+  @@index([status])
+  @@map("user_journeys")
+}
+
+model UserJourneyStep {
+  id             String     @id @default(uuid()) @db.Uuid
+  userJourneyId  String     @map("user_journey_id") @db.Uuid
+  templateStepId String     @map("template_step_id") @db.Uuid
+  status         StepStatus @default(LOCKED)
+  resolvedOrder  Int?       @map("resolved_order")
+  checklistState Json?      @db.JsonB
+  lastNudgedAt   DateTime?  @map("last_nudged_at")
+
+  userJourney  UserJourney  @relation(fields: [userJourneyId], references: [id], onDelete: Cascade)
+  templateStep TemplateStep @relation(fields: [templateStepId], references: [id])
+
+  completedAt DateTime? @map("completed_at")
+
+  @@unique([userJourneyId, templateStepId])
+  @@index([userJourneyId])
+  @@index([status])
+  @@map("user_journey_steps")
+}
+
+// ─────────────────────────────────────────────
+// Access Management
+// ─────────────────────────────────────────────
+
+model AccessProvisioning {
+  id                String       @id @default(uuid()) @db.Uuid
+  userId            String       @map("user_id") @db.Uuid
+  systemName        String       @map("system_name")
+  status            AccessStatus @default(REQUESTED)
+  accessCredentials String?      @map("access_credentials")
+  jiraTicketId      String?      @map("jira_ticket_id")
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("access_provisionings")
+}
+
+// ─────────────────────────────────────────────
+// Communications
+// ─────────────────────────────────────────────
+
+model CommunicationTemplate {
+  id                String               @id @default(uuid()) @db.Uuid
+  journeyTemplateId String?              @map("journey_template_id") @db.Uuid
+  name              String
+  channel           CommunicationChannel
+  trigger           CommunicationTrigger
+  triggerConfig     Json?                @db.JsonB
+
+  subject      String?
+  bodyTemplate String  @map("body_template") @db.Text
+
+  isActive   Boolean @default(true) @map("is_active")
+  conditions Json?   @db.JsonB
+
+  journeyTemplate   JourneyTemplate?   @relation(fields: [journeyTemplateId], references: [id])
+  communicationLogs CommunicationLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([trigger, isActive])
+  @@index([journeyTemplateId])
+  @@map("communication_templates")
+}
+
+model CommunicationLog {
+  id                      String               @id @default(uuid()) @db.Uuid
+  communicationTemplateId String               @map("communication_template_id") @db.Uuid
+  userId                  String               @map("user_id") @db.Uuid
+  channel                 CommunicationChannel
+  recipientAddress        String               @map("recipient_address")
+  renderedSubject         String?              @map("rendered_subject")
+  status                  String
+  externalId              String?              @map("external_id")
+  errorMessage            String?              @map("error_message")
+
+  communicationTemplate CommunicationTemplate @relation(fields: [communicationTemplateId], references: [id])
+  user                  User                  @relation(fields: [userId], references: [id])
+
+  sentAt      DateTime? @map("sent_at")
+  deliveredAt DateTime? @map("delivered_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([communicationTemplateId])
+  @@index([status])
+  @@map("communication_logs")
+}
