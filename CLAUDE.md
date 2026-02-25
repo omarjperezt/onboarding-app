@@ -278,17 +278,34 @@ npm run dev
 
 ## Próximos Pasos (To-Do)
 
-**Completed through Chunk 3 + Provisioning API + Nudge UI + UX/Branding Refactor + "Modern OS" Dashboard Refactor.**
+**Completed through Chunk 3 + Provisioning API + Nudge UI + UX/Branding Refactor + "Modern OS" Dashboard Refactor + Interactive CTA (StepDetailSheet).**
 
 **PAUSED:** Slack Webhook integration tests, IT Nudge console simulations.
 
-**Immediate next priorities (in order):**
+### Session 7 — GitHub Setup + Interactive CTA + Chunk 5 Planning
 
-1. **Chunk 5A — "Ruta" Tab (Journey Timeline):** Build the `/dashboard/ruta` page (or tab view) that displays the full journey step timeline using `JourneyStepCard` components. This is the content that was removed from the main dashboard during the Modern OS refactor. Must match the new premium aesthetic with the bottom nav "Ruta" tab as active.
+26. **GitHub Remote:** Repository pushed to `https://github.com/omarjperezt/onboarding-app`. Git identity set to `Omar Perez <omarj.perezt@farmatodo.com>`. GitHub CLI (`gh`) installed and authenticated via SSO.
 
-2. **Chunk 5B — "Accesos" Tab (Digital Wallet):** Build the `/dashboard/accesos` page showing the user's `accessProvisionings` as a card-based digital wallet view. Uses the `AccessList` component data but with new Modern OS styling.
+27. **Interactive CTA — StepDetailSheet** (`src/components/journey/step-detail-sheet.tsx`): "Comenzar Misión →" button on the Inicio focus card now opens a bottom Sheet (92vh, rounded-t-3xl) displaying the full step content via `ContentBlockRenderer`. Includes custom mobile-native header with back button, step type badge, day label, and empty state fallback.
 
-3. **Chunk 4 — Communications Engine with SendGrid + admin editor.** Per `implementation-steps.md`, Chunk 4 includes:
+28. **Chunk 5 Execution Plan** (`chunk-5-execution-plan.md`): **PLANNING PHASE — AWAITING APPROVAL.** Architectural plan for Ruta, Accesos, and Perfil tabs. Key decisions:
+    - **Routing:** Separate Next.js pages (`/dashboard/ruta`, `/dashboard/accesos`, `/dashboard/perfil`) with shared `dashboard/layout.tsx` — NOT client-side tabs.
+    - **Shared Layout:** Bottom nav extracted to Client Component (`BottomNav`) using `Link` + `usePathname()`. DevSimulator moves to layout.
+    - **Data Fetching:** Per-page focused Prisma queries (Ruta fetches steps, Accesos fetches provisions, each independent).
+    - **Component Reuse:** `JourneyStepCard` reused as-is for Ruta. `AccessList` refactored to card-based `AccessCard` grid for Accesos.
+    - **Execution:** 3 phases — Phase 0 (structural layout refactor), Phase 1 (Ruta tab), Phase 2 (Accesos tab), Phase 3 (Perfil stub + polish).
+
+**Immediate next priorities (in order, pending plan approval):**
+
+1. **Chunk 5 Phase 0 — Dashboard Layout Refactor:** Extract bottom nav and DevSimulator into `dashboard/layout.tsx`. Create `BottomNav` client component with `Link` + `usePathname()`.
+
+2. **Chunk 5B — "Ruta" Tab (Journey Timeline):** Full journey step timeline at `/dashboard/ruta` using `JourneyStepCard` components with tap-to-expand via `StepDetailSheet`.
+
+3. **Chunk 5C — "Accesos" Tab (Digital Wallet):** Access provisioning cards at `/dashboard/accesos` with status-based styling.
+
+4. **Chunk 5D — "Perfil" Tab (Stub):** Minimal user profile page at `/dashboard/perfil`.
+
+5. **Chunk 4 — Communications Engine with SendGrid + admin editor.** Per `implementation-steps.md`, Chunk 4 includes:
    - Admin pages for CommunicationTemplate CRUD (`/admin/communications`)
    - TipTap-based email body editor with variable insertion
    - Email preview with corporate layout

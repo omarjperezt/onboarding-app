@@ -5,5 +5,5 @@ import { processIdentityFlip } from "@/lib/journey-engine/process-identity-flip"
 
 export async function simulateIdentityFlip(userId: string) {
   await processIdentityFlip(userId, "josmar.rodriguez@farmatodo.com");
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }

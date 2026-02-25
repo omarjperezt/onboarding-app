@@ -9,5 +9,5 @@ export async function simulateSsoLogin(userId: string) {
     data: { ssoAuthenticatedAt: new Date() },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }

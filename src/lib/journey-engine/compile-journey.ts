@@ -105,7 +105,7 @@ export async function compileAllJourneysForUser(userId: string) {
   }
 
   revalidatePath("/admin");
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 
   return { journeysCreated: results.length, journeys: results };
 }

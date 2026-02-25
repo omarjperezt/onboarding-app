@@ -24,7 +24,7 @@ export async function updateChecklist(
     },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 
   return { success: true };
 }

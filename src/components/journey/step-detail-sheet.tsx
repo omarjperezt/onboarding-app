@@ -35,6 +35,7 @@ interface StepDetailSheetProps {
   userVariables: UserVariables;
   isIdentityStep: boolean;
   lastNudgedAt: string | null;
+  children?: React.ReactNode;
 }
 
 const stepTypeLabels: Record<StepType, string> = {
@@ -54,6 +55,7 @@ export function StepDetailSheet({
   userVariables,
   isIdentityStep,
   lastNudgedAt,
+  children,
 }: StepDetailSheetProps) {
   const [open, setOpen] = useState(false);
 
@@ -61,15 +63,21 @@ export function StepDetailSheet({
 
   return (
     <>
-      {/* CTA Button */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0F4C81] px-6 py-4 text-[15px] font-semibold text-white shadow-md transition-colors hover:bg-[#0d4070] active:bg-[#0a3560]"
-      >
-        Comenzar Misión
-        <ArrowRight className="h-5 w-5" />
-      </button>
+      {/* Trigger: custom children or default CTA button */}
+      {children ? (
+        <div role="button" tabIndex={0} onClick={() => setOpen(true)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen(true); }}>
+          {children}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0F4C81] px-6 py-4 text-[15px] font-semibold text-white shadow-md transition-colors hover:bg-[#0d4070] active:bg-[#0a3560]"
+        >
+          Comenzar Misión
+          <ArrowRight className="h-5 w-5" />
+        </button>
+      )}
 
       {/* Full-screen Sheet */}
       <Sheet open={open} onOpenChange={setOpen}>

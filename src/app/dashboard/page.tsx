@@ -1,11 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import {
   Card,
-  CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   LayoutGrid,
   AlertTriangle,
@@ -13,14 +11,8 @@ import {
   IdCard,
   BookOpen,
   Headphones,
-  Home,
-  Map,
-  CreditCard,
-  User,
   ClipboardList,
-  ArrowRight,
 } from "lucide-react";
-import { DevSimulator } from "@/components/dev/dev-simulator";
 import { StepDetailSheet } from "@/components/journey/step-detail-sheet";
 import type { ContentPayload } from "@/lib/journey-engine/types";
 import type { ChecklistState } from "@/app/actions/update-checklist";
@@ -48,9 +40,6 @@ async function getDashboardData() {
             ],
           },
         },
-      },
-      accessProvisionings: {
-        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -131,7 +120,7 @@ export default async function DashboardPage() {
     (nextStepConditions?.requiresCorporateEmail ?? false);
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] pb-24">
+    <>
       {/* ── Deep Blue Header ── */}
       <header className="relative bg-[#0F4C81] px-6 pt-6 pb-16">
         {/* Gradient overlay for depth */}
@@ -290,22 +279,7 @@ export default async function DashboardPage() {
           Farmatodo Onboarding OS &middot; {new Date().getFullYear()}
         </p>
       </main>
-
-      {/* ── Fixed Bottom Navigation ── */}
-      <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-gray-200 bg-white">
-        <div className="mx-auto max-w-lg flex items-center justify-around px-2 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <BottomNavItem icon={Home} label="Inicio" active />
-          <BottomNavItem icon={Map} label="Ruta" />
-          <BottomNavItem icon={CreditCard} label="Accesos" />
-          <BottomNavItem icon={User} label="Perfil" />
-        </div>
-      </nav>
-
-      {/* Dev-only simulator — stripped in production builds */}
-      {process.env.NODE_ENV === "development" && (
-        <DevSimulator userId={user.id} />
-      )}
-    </div>
+    </>
   );
 }
 
@@ -349,38 +323,3 @@ function QuickAccessCard({
   );
 }
 
-function BottomNavItem({
-  icon: Icon,
-  label,
-  active = false,
-}: {
-  icon: typeof Home;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className="flex flex-col items-center gap-1 min-w-[56px]"
-    >
-      <div
-        className={`flex h-9 w-9 items-center justify-center rounded-full ${
-          active ? "bg-[#0F4C81]" : ""
-        }`}
-      >
-        <Icon
-          className={`h-5 w-5 ${active ? "text-white" : "text-gray-400"}`}
-        />
-      </div>
-      <span
-        className={`text-[11px] ${
-          active
-            ? "font-bold text-[#0F4C81]"
-            : "font-medium text-gray-400"
-        }`}
-      >
-        {label}
-      </span>
-    </button>
-  );
-}

@@ -81,5 +81,5 @@ export async function rollbackIdentityFlip(userId: string) {
     });
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }

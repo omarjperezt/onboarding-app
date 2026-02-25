@@ -128,7 +128,7 @@ export async function sendItNudge(
     data: { lastNudgedAt: new Date() },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 
   return {
     success: true,
