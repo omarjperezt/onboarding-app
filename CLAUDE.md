@@ -172,7 +172,12 @@ src/
 │   ├── layout.tsx                  # Root layout (PWA meta, lang="es", Toaster)
 │   ├── page.tsx                    # Redirect → /dashboard
 │   ├── globals.css                 # Tema Farmatodo corporate blue (oklch hue ~250)
-│   ├── dashboard/page.tsx          # Dashboard empleado — "Modern OS" layout (Server Component)
+│   ├── dashboard/
+│   │   ├── layout.tsx              # Shared layout: bg, pb-24, BottomNav, DevSimulator
+│   │   ├── page.tsx                # Inicio tab — header + focus card + quick access
+│   │   ├── ruta/page.tsx           # Ruta tab — full journey timeline with JourneyStepCard
+│   │   ├── accesos/page.tsx        # Accesos tab — digital wallet with AccessCard grid
+│   │   └── perfil/page.tsx         # Perfil tab — user info stub + "Cerrar Sesión" placeholder
 │   ├── admin/
 │   │   ├── layout.tsx              # Layout admin con nav (Torre de Control, Journeys, Vista Empleado)
 │   │   ├── page.tsx                # Torre de Control (Server Component)
@@ -200,11 +205,14 @@ src/
 │       └── auth/                      # (prepared)
 ├── components/
 │   ├── ui/                         # shadcn/ui base components (18 installed)
+│   ├── dashboard/
+│   │   └── bottom-nav.tsx            # Client Component: Link + usePathname() bottom nav
 │   ├── journey/
 │   │   ├── journey-step-card.tsx       # Rich content + nudge button
 │   │   ├── content-block-renderer.tsx # RICH_TEXT/VIDEO/PDF/CHECKLIST/FORM
+│   │   ├── step-detail-sheet.tsx      # Bottom sheet for step detail (custom trigger via children)
 │   │   ├── step-checklist.tsx         # Interactive checklist with persistence
-│   │   └── access-list.tsx
+│   │   └── access-list.tsx            # AccessCard + AccessCardGrid (digital wallet cards)
 │   ├── admin/
 │   │   ├── admin-filters.tsx       # Mounted guard for Radix hydration
 │   │   ├── admin-employee-table.tsx
@@ -245,7 +253,10 @@ docker ps --filter name=pg-onboarding
 
 # 3. Levantar el servidor de desarrollo
 npm run dev
-# → http://localhost:3000 (dashboard empleado)
+# → http://localhost:3000/dashboard (Inicio tab)
+# → http://localhost:3000/dashboard/ruta (Ruta tab — journey timeline)
+# → http://localhost:3000/dashboard/accesos (Accesos tab — digital wallet)
+# → http://localhost:3000/dashboard/perfil (Perfil tab — user profile)
 # → http://localhost:3000/admin (torre de control)
 # → http://localhost:3000/admin/journeys (journey builder)
 ```
@@ -278,37 +289,31 @@ npm run dev
 
 ## Próximos Pasos (To-Do)
 
-**Completed through Chunk 3 + Provisioning API + Nudge UI + UX/Branding Refactor + "Modern OS" Dashboard Refactor + Interactive CTA (StepDetailSheet).**
+**Completed through Chunk 3 + Provisioning API + Nudge UI + UX/Branding Refactor + "Modern OS" Dashboard Refactor + Interactive CTA + Chunk 5 (all 4 tabs).**
 
 **PAUSED:** Slack Webhook integration tests, IT Nudge console simulations.
 
-### Session 7 — GitHub Setup + Interactive CTA + Chunk 5 Planning
+### Session 7 — GitHub Setup + Interactive CTA + Chunk 5 (Complete)
 
 26. **GitHub Remote:** Repository pushed to `https://github.com/omarjperezt/onboarding-app`. Git identity set to `Omar Perez <omarj.perezt@farmatodo.com>`. GitHub CLI (`gh`) installed and authenticated via SSO.
 
-27. **Interactive CTA — StepDetailSheet** (`src/components/journey/step-detail-sheet.tsx`): "Comenzar Misión →" button on the Inicio focus card now opens a bottom Sheet (92vh, rounded-t-3xl) displaying the full step content via `ContentBlockRenderer`. Includes custom mobile-native header with back button, step type badge, day label, and empty state fallback.
+27. **Interactive CTA — StepDetailSheet** (`src/components/journey/step-detail-sheet.tsx`): "Comenzar Misión →" button on the Inicio focus card now opens a bottom Sheet (92vh, rounded-t-3xl) displaying the full step content via `ContentBlockRenderer`. Extended with optional `children` prop for custom triggers (used by Ruta tab tap-to-expand).
 
-28. **Chunk 5 Execution Plan** (`chunk-5-execution-plan.md`): **PLANNING PHASE — AWAITING APPROVAL.** Architectural plan for Ruta, Accesos, and Perfil tabs. Key decisions:
-    - **Routing:** Separate Next.js pages (`/dashboard/ruta`, `/dashboard/accesos`, `/dashboard/perfil`) with shared `dashboard/layout.tsx` — NOT client-side tabs.
-    - **Shared Layout:** Bottom nav extracted to Client Component (`BottomNav`) using `Link` + `usePathname()`. DevSimulator moves to layout.
-    - **Data Fetching:** Per-page focused Prisma queries (Ruta fetches steps, Accesos fetches provisions, each independent).
-    - **Component Reuse:** `JourneyStepCard` reused as-is for Ruta. `AccessList` refactored to card-based `AccessCard` grid for Accesos.
-    - **Execution:** 3 phases — Phase 0 (structural layout refactor), Phase 1 (Ruta tab), Phase 2 (Accesos tab), Phase 3 (Perfil stub + polish).
+28. **Chunk 5 — Modern OS Tab Navigation (100% complete):**
+    - **Phase 0 — Structural Refactor:** `dashboard/layout.tsx` (shared bg, padding, BottomNav, DevSimulator). `BottomNav` Client Component (`src/components/dashboard/bottom-nav.tsx`) with `Link` + `usePathname()`. All server actions updated to `revalidatePath("/dashboard", "layout")` for sub-route revalidation.
+    - **Phase 1 — Ruta Tab** (`/dashboard/ruta`): Full journey timeline with `JourneyStepCard` for all steps. PENDING steps wrapped in `StepDetailSheet` for tap-to-expand. Page header with journey name + progress bar.
+    - **Phase 2 — Accesos Tab** (`/dashboard/accesos`): Digital wallet with `AccessCard` + `AccessCardGrid` components. System-specific icons, colored status dots (emerald/amber/red), Jira ticket subtitles, summary pills in header.
+    - **Phase 3 — Perfil Tab** (`/dashboard/perfil`): User profile stub with avatar, name, status badge, email/cluster/country info cards, disabled "Cerrar Sesión" placeholder.
+    - **Architecture:** Separate Next.js pages with per-page focused Prisma queries. DevSimulator persists across all tabs. Zero hydration errors.
 
-**Immediate next priorities (in order, pending plan approval):**
+**Immediate next priorities (in order):**
 
-1. **Chunk 5 Phase 0 — Dashboard Layout Refactor:** Extract bottom nav and DevSimulator into `dashboard/layout.tsx`. Create `BottomNav` client component with `Link` + `usePathname()`.
-
-2. **Chunk 5B — "Ruta" Tab (Journey Timeline):** Full journey step timeline at `/dashboard/ruta` using `JourneyStepCard` components with tap-to-expand via `StepDetailSheet`.
-
-3. **Chunk 5C — "Accesos" Tab (Digital Wallet):** Access provisioning cards at `/dashboard/accesos` with status-based styling.
-
-4. **Chunk 5D — "Perfil" Tab (Stub):** Minimal user profile page at `/dashboard/perfil`.
-
-5. **Chunk 4 — Communications Engine with SendGrid + admin editor.** Per `implementation-steps.md`, Chunk 4 includes:
+1. **Chunk 4 — Communications Engine with SendGrid + admin editor.** Per `implementation-steps.md`, Chunk 4 includes:
    - Admin pages for CommunicationTemplate CRUD (`/admin/communications`)
    - TipTap-based email body editor with variable insertion
    - Email preview with corporate layout
    - `dispatchCommunication()` orchestrator with deduplication
    - SendGrid integration (`@sendgrid/mail`)
    - Trigger wiring: JOURNEY_ASSIGNED, IDENTITY_FLIP, SSO_AUTHENTICATED, etc.
+
+2. **Auth Integration:** Configure NextAuth.js v5 — Magic Links (personal email) + Google Provider (SSO post-flip). Wire "Cerrar Sesión" on Perfil tab.
