@@ -21,6 +21,9 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { DevSimulator } from "@/components/dev/dev-simulator";
+import { StepDetailSheet } from "@/components/journey/step-detail-sheet";
+import type { ContentPayload } from "@/lib/journey-engine/types";
+import type { ChecklistState } from "@/app/actions/update-checklist";
 
 // Force dynamic rendering (requires DB at runtime, not build time)
 export const dynamic = "force-dynamic";
@@ -102,6 +105,30 @@ export default async function DashboardPage() {
     nextPendingStep?.resolvedOrder ??
     nextPendingStep?.templateStep.orderIndex ??
     1;
+
+  // Prepare data for the interactive CTA sheet
+  const stepContentPayload =
+    (nextPendingStep?.templateStep.contentPayload as ContentPayload | null) ??
+    null;
+  const stepChecklistState =
+    (nextPendingStep?.checklistState as ChecklistState) ?? {};
+  const userVariables = {
+    firstName,
+    fullName: user.fullName,
+    corporateEmail: user.corporateEmail ?? undefined,
+    personalEmail: user.personalEmail,
+    clusterName: user.cluster?.name ?? undefined,
+    countryName: user.cluster?.country ?? undefined,
+    position: user.position ?? undefined,
+  };
+
+  // Check if the next step is the identity/approval step
+  const nextStepConditions = nextPendingStep?.templateStep.conditions as
+    | { requiresCorporateEmail?: boolean }
+    | null;
+  const nextStepIsIdentity =
+    nextPendingStep?.templateStep.stepType === "APPROVAL" &&
+    (nextStepConditions?.requiresCorporateEmail ?? false);
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] pb-24">
@@ -190,14 +217,21 @@ export default async function DashboardPage() {
               </p>
             )}
 
-            {/* CTA Button */}
-            <button
-              type="button"
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0F4C81] px-6 py-4 text-[15px] font-semibold text-white shadow-md transition-colors hover:bg-[#0d4070] active:bg-[#0a3560]"
-            >
-              Comenzar Misión
-              <ArrowRight className="h-5 w-5" />
-            </button>
+            {/* CTA Button — opens step detail sheet */}
+            <StepDetailSheet
+              stepTitle={nextPendingStep.templateStep.title}
+              stepDescription={nextStepDescription}
+              stepType={nextPendingStep.templateStep.stepType}
+              orderIndex={nextStepOrder}
+              contentPayload={stepContentPayload}
+              userJourneyStepId={nextPendingStep.id}
+              checklistState={stepChecklistState}
+              userVariables={userVariables}
+              isIdentityStep={nextStepIsIdentity}
+              lastNudgedAt={
+                nextPendingStep.lastNudgedAt?.toISOString() ?? null
+              }
+            />
           </div>
         )}
 
