@@ -56,19 +56,13 @@ enum CommunicationChannel {
   EMAIL
   SMS
   WHATSAPP
-  IN_APP
 }
 
-enum CommunicationTrigger {
+enum TriggerEvent {
   JOURNEY_ASSIGNED
-  STEP_UNLOCKED
-  STEP_COMPLETED
   IDENTITY_FLIP
   SSO_AUTHENTICATED
-  JOURNEY_COMPLETED
-  REMINDER
-  ACCESS_PROVISIONED
-  CUSTOM
+  MANUAL_TEST
 }
 
 enum ContentBlockType {
@@ -156,10 +150,9 @@ model JourneyTemplate {
   version       Int     @default(1)
   applicability Json?   @db.JsonB
 
-  cluster        Cluster?                @relation(fields: [clusterId], references: [id])
-  steps          TemplateStep[]
-  userJourneys   UserJourney[]
-  communications CommunicationTemplate[]
+  cluster      Cluster?       @relation(fields: [clusterId], references: [id])
+  steps        TemplateStep[]
+  userJourneys UserJourney[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -264,50 +257,41 @@ model AccessProvisioning {
 // ─────────────────────────────────────────────
 
 model CommunicationTemplate {
-  id                String               @id @default(uuid()) @db.Uuid
-  journeyTemplateId String?              @map("journey_template_id") @db.Uuid
-  name              String
-  channel           CommunicationChannel
-  trigger           CommunicationTrigger
-  triggerConfig     Json?                @db.JsonB
+  id      String               @id @default(uuid()) @db.Uuid
+  name    String
+  channel CommunicationChannel
+  trigger TriggerEvent
 
-  subject      String?
-  bodyTemplate String  @map("body_template") @db.Text
+  subject     String?
+  bodyContent String  @map("body_content") @db.Text
 
   isActive   Boolean @default(true) @map("is_active")
-  conditions Json?   @db.JsonB
+  conditions Json    @default("{}") @db.JsonB
 
-  journeyTemplate   JourneyTemplate?   @relation(fields: [journeyTemplateId], references: [id])
   communicationLogs CommunicationLog[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([trigger, isActive])
-  @@index([journeyTemplateId])
   @@map("communication_templates")
 }
 
 model CommunicationLog {
-  id                      String               @id @default(uuid()) @db.Uuid
-  communicationTemplateId String               @map("communication_template_id") @db.Uuid
-  userId                  String               @map("user_id") @db.Uuid
-  channel                 CommunicationChannel
-  recipientAddress        String               @map("recipient_address")
-  renderedSubject         String?              @map("rendered_subject")
-  status                  String
-  externalId              String?              @map("external_id")
-  errorMessage            String?              @map("error_message")
+  id         String       @id @default(uuid()) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  templateId String       @map("template_id") @db.Uuid
+  trigger    TriggerEvent
+  status     String
 
-  communicationTemplate CommunicationTemplate @relation(fields: [communicationTemplateId], references: [id])
-  user                  User                  @relation(fields: [userId], references: [id])
+  template CommunicationTemplate @relation(fields: [templateId], references: [id])
+  user     User                  @relation(fields: [userId], references: [id])
 
-  sentAt      DateTime? @map("sent_at")
-  deliveredAt DateTime? @map("delivered_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  sentAt DateTime @default(now()) @map("sent_at")
 
+  @@unique([userId, templateId])
   @@index([userId])
-  @@index([communicationTemplateId])
+  @@index([templateId])
   @@index([status])
   @@map("communication_logs")
 }

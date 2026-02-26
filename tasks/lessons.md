@@ -24,6 +24,9 @@
 
 ## UI / Styling
 
+- **CSS Grid blowouts (split screens):** When using `grid-cols-2` or fractional grids (`grid-cols-[5fr_7fr]`), child column wrappers MUST have `min-w-0`. Without it, wide inner content (iframes, code editors, mockups) breaks the grid track and overlaps adjacent columns.
+- **Form flow & action buttons:** Never place the primary submit button in a floating top header competing with toolbars. Place it at the bottom of the form column (natural reading flow). Do not force side-by-side inputs (`grid-cols-2`) in narrow columns — use strict vertical stacking (`flex-col`) for robust layouts.
+- **Fixed-height editors in dense layouts:** Large inputs (raw HTML editors, code textareas) must use a fixed height with internal scroll (`h-[500px] overflow-y-auto resize-none`). Never use auto-grow in split-screen layouts — it pushes sibling content off-screen.
 - **shadcn Card fights custom layouts:** The default `gap-6 py-6 border` on shadcn Card conflicts with pixel-perfect layouts. Use raw `div` with explicit padding/shadow for the focus card.
 - **Sonner toast:** Hardcoded light theme (no `next-themes` dependency). `import { Toaster } from "@/components/ui/sonner"`.
 - **Node v25 module issues:** Can cause resolution problems with some npm packages.

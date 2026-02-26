@@ -40,6 +40,26 @@
 - [x] `/dashboard/accesos` — digital wallet (AccessCard grid, status pills)
 - [x] `/dashboard/perfil` — user profile stub
 
+### Chunk 4 — Communications Engine Foundation (Session 8-9) ✅
+- [x] Simplified schema: `TriggerEvent` enum (4 values), removed `IN_APP` from channel
+- [x] Decoupled `CommunicationTemplate` from `JourneyTemplate` — standalone with Condition Engine
+- [x] Simplified `CommunicationLog` with `@@unique([userId, templateId])` idempotency
+- [x] `dispatchCommunication()` orchestrator (`src/lib/communications/dispatcher.ts`)
+- [x] Admin Communications Hub scaffold (`/admin/communications`) with shadcn Tabs
+- [x] CRUD server actions (`src/app/actions/communication-templates.ts`): save, delete, test
+- [x] Split-screen Template Builder (`/admin/communications/[templateId]`)
+- [x] Raw HTML editor + iframe preview (desktop/mobile toggle) for Email
+- [x] Textarea editor + chat bubble preview (WA green, SMS blue) for SMS/WA
+- [x] Live variable interpolation in preview pane
+- [x] Visual condition builder (key-value rows, replaces raw JSON)
+- [x] Click-to-insert variables at cursor position
+- [x] Humanized trigger labels (hidden MANUAL_TEST from UI)
+- [x] Channel-conditional rendering (subject for email only, char counters for SMS/WA)
+- [x] Variables helper card (firstName, lastName, email, corporateEmail)
+- [x] Test send action (mock console dispatch)
+
+> **BLOCKED — awaiting IT credentials:** SendGrid API key, Twilio SID/token, WhatsApp Business API access.
+
 ### PAUSED
 - [ ] Slack Webhook integration tests
 - [ ] IT Nudge console simulations
@@ -48,14 +68,11 @@
 
 ## Next Priorities
 
-### 1. Chunk 4 — Communications Engine (SendGrid)
-Per `implementation-steps.md`:
-- [ ] Admin CRUD pages for `CommunicationTemplate` (`/admin/communications`)
-- [ ] TipTap-based email body editor with variable insertion
-- [ ] Email preview with corporate layout
-- [ ] `dispatchCommunication()` orchestrator with deduplication
-- [ ] SendGrid integration (`@sendgrid/mail`)
-- [ ] Trigger wiring: JOURNEY_ASSIGNED, IDENTITY_FLIP, SSO_AUTHENTICATED
+### 1. Chunk 4 — Communications Engine (remaining, BLOCKED on IT credentials)
+- [ ] SendGrid integration (`@sendgrid/mail`) — replace mock console dispatch
+- [ ] Twilio SMS + WhatsApp Business API integration
+- [ ] Trigger wiring into existing server actions (identity flip, SSO, compile)
+- [ ] Corporate email HTML template (branded Farmatodo layout)
 
 ### 2. Auth Integration
 - [ ] Configure NextAuth.js v5 — Magic Links (personal email) + Google Provider (SSO)
@@ -74,7 +91,10 @@ Per `implementation-steps.md`:
 - Implementation plan: `implementation-steps.md`
 - Chunk 5 plan: `chunk-5-execution-plan.md`
 - Webhook testing: `webhook-testing-guide.md`
-- Schema: `prisma/schema.prisma` (10 models, 9 enums)
+- Schema: `prisma/schema.prisma` (10 models, 10 enums)
+- Comms dispatcher: `src/lib/communications/dispatcher.ts`
+- Comms actions: `src/app/actions/communication-templates.ts`
+- Comms builder: `src/components/admin/communications/template-builder.tsx`
 - Seed: `prisma/seed.ts` (7 users, 7 template steps)
 
 ## Env Vars
